@@ -5,6 +5,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.Counter;
+import io.prometheus.client.Histogram;
+import io.prometheus.client.Summary;
 import io.prometheus.client.exporter.HTTPServer;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -97,11 +99,23 @@ public class PrometheusDemo {
 
         private final Counter evaluateCount = Counter.build().name("dmn_evaluation_prometheus_total").help("DMN Evaluations").labelNames("type").register();
 
+        private final Histogram histogram = Histogram.build().name("dmn_evaluate_time").help("DMN Evaluation Time").register();
+        private Histogram.Timer timer;
+
         @Override public void beforeEvaluateDecision(BeforeEvaluateDecisionEvent event) {
+            timer = histogram.startTimer();
         }
 
         @Override public void afterEvaluateDecision(AfterEvaluateDecisionEvent event) {
             evaluateCount.labels("decision").inc();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                double duration = timer.observeDuration();
+                System.out.println("duration = " + duration);
+                e.printStackTrace();
+                timer.close();
+            }
         }
 
         @Override public void beforeEvaluateBKM(BeforeEvaluateBKMEvent event) {
