@@ -6,7 +6,6 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
-import io.prometheus.client.Summary;
 import io.prometheus.client.exporter.HTTPServer;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -34,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.text.MessageFormat;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -80,7 +80,7 @@ public class PrometheusDemo {
 
         while (true) {
             int mSalary = salaryRandom.nextInt(1000, 100000 / 12);
-            int pause = (int) (10.0 / (1.0 - pauseRandom.nextDouble())); // Power law distribution
+            int pause = salaryRandom.nextInt(2000, 3000);
 
             DMNContext context = dmnRuntime.newContext();
             context.set("Monthly Salary", mSalary);
@@ -109,13 +109,17 @@ public class PrometheusDemo {
         @Override public void afterEvaluateDecision(AfterEvaluateDecisionEvent event) {
             evaluateCount.labels("decision").inc();
             try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
+                ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
+
+                int pause = salaryRandom.nextInt(1000, 3000);
+                Thread.sleep(pause);
                 double duration = timer.observeDuration();
-                System.out.println("duration = " + duration);
-                e.printStackTrace();
                 timer.close();
+                LOGGER.info(MessageFormat.format("pause: {0}ms - duration = {1}ms", pause, duration));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+
         }
 
         @Override public void beforeEvaluateBKM(BeforeEvaluateBKMEvent event) {

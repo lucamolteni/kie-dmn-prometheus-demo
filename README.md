@@ -19,3 +19,11 @@ Start the DMN application from command line by typing `mvn clean package exec:ja
 On a browser, open [http://localhost:9090](). There will be two counters available `dmn_execute_prometheus_total` and `dmn_execute_micrometer_total` that are the same, but one is recorded directly while other is using the [micrometer.io]() metrics facade.
 
 Prometheus functions are available. For example the function `rate(dmn_evaluation_prometheus_total[60s])` will output the number of evaluations per second over an interval of 60 seconds.
+
+
+### Example queries
+
+
+histogram_quantile(0.5, rate(dmn_evaluate_time_bucket[5m]))
+avg_over_time(dmn_evaluate_time_bucket[5m])
+max_over_time(dmn_evaluate_time_bucket[5m])
