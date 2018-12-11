@@ -32,7 +32,7 @@ public class PrometheusListener implements DMNRuntimeEventListener {
 
     @Override
     public void afterEvaluateDecision(AfterEvaluateDecisionEvent event) {
-        decisionTimer.registerTimer(event.getDecision().getDecision());
+        decisionTimer.registerTimer(event.getDecision().getDecision(), Thread.currentThread().getId());
     }
 
     @Override

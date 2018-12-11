@@ -25,7 +25,7 @@ public class DecisionTimer {
 
     public DecisionTimerKey scheduleTimer(Decision decision, long id) {
 
-        DecisionTimer.DecisionTimerKey key = new DecisionTimerKey(decision, Thread.currentThread().getId());
+        DecisionTimer.DecisionTimerKey key = new DecisionTimerKey(decision, id);
 
         map.computeIfAbsent(key, k -> {
             String decisionName = getDecisionName(decision);
@@ -35,8 +35,8 @@ public class DecisionTimer {
         return new DecisionTimerKey(decision, id);
     }
 
-    public void registerTimer(Decision decision) {
-        DecisionTimerKey key = new DecisionTimerKey(decision, Thread.currentThread().getId());
+    public void registerTimer(Decision decision, long threadId) {
+        DecisionTimerKey key = new DecisionTimerKey(decision, threadId);
 
         DecisionTimerValue value = map.get(key);
         if (value != null) {
