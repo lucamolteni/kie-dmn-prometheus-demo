@@ -3,9 +3,12 @@ package org.kie.dmn.prometheus.demo;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.util.Random;
+import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -39,6 +42,9 @@ public class PrometheusDemo {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusDemo.class);
 
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+
     public static void main(String[] args) throws IOException, InterruptedException {
         ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
 
@@ -50,7 +56,13 @@ public class PrometheusDemo {
 
         DMNRuntime dmnRuntime = kieContainer.newKieSession().getKieRuntime(DMNRuntime.class);
         ((DMNRuntimeImpl) dmnRuntime).setOption(new RuntimeTypeCheckOption(true));
-        dmnRuntime.addListener(new PrometheusListener());
+
+        Duration evictionTime = Duration.ofSeconds(13);
+        DecisionTimer decisionTimer = new DecisionTimer(evictionTime);
+        dmnRuntime.addListener(new PrometheusListener(decisionTimer));
+
+        // Schedule eviction
+        scheduler.schedule(decisionTimer::purgeTimers, evictionTime.toMillis(), TimeUnit.MILLISECONDS);
 
         DMNModel dmnModel = dmnRuntime.getModel("https://github.com/kiegroup/kie-dmn/itemdef", "simple-item-def");
 

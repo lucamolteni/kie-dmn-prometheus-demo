@@ -1,7 +1,12 @@
 package org.kie.dmn.prometheus.demo;
 
 import java.text.MessageFormat;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +26,18 @@ public class DecisionTimer {
             .labelNames("decision_name")
             .register();
 
+    private final Duration evictionTime;
+
+    private static final DateTimeFormatter formatter =
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT )
+                    .withLocale(Locale.ITALY )
+                    .withZone(ZoneId.systemDefault() );
+
     private Map<DecisionTimerKey, DecisionTimerValue> map = new ConcurrentHashMap<>();
+
+    public DecisionTimer(Duration evictionTime) {
+        this.evictionTime = evictionTime;
+    }
 
     public void scheduleTimer(Decision decision, long id) {
 
@@ -52,6 +68,23 @@ public class DecisionTimer {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void purgeTimers() {
+        LOGGER.info("Purging timers");
+        LOGGER.info("Map size: " + map.entrySet().size());
+        map.entrySet().removeIf(kv -> {
+            Instant timerCreationTS = kv.getValue().instant;
+            Instant evictionTime = Instant.now().minus(this.evictionTime);
+            boolean removed = timerCreationTS.isBefore(evictionTime);
+
+            LOGGER.info(MessageFormat.format("timer creation date {0} eviction time {1} removed {2}",
+                        formatter.format(timerCreationTS),
+                        formatter.format(evictionTime),
+                        removed));
+
+            return removed;
+        });
     }
 
     final class DecisionTimerKey {

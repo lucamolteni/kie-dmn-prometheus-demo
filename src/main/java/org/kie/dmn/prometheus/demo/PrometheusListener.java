@@ -19,7 +19,11 @@ public class PrometheusListener implements DMNRuntimeEventListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusListener.class);
 
-    private DecisionTimer decisionTimer = new DecisionTimer();
+    private DecisionTimer decisionTimer;
+
+    public PrometheusListener(DecisionTimer decisionTimer) {
+        this.decisionTimer = decisionTimer;
+    }
 
     private final Counter evaluateCount = Counter.build().name("dmn_evaluation_prometheus_total")
             .help("DMN Evaluations")
