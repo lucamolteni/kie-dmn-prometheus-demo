@@ -24,6 +24,6 @@ Prometheus functions are available. For example the function `rate(dmn_evaluatio
 ### Example queries
 
 
-histogram_quantile(0.5, rate(dmn_evaluate_time_bucket[5m]))
-avg_over_time(dmn_evaluate_time_bucket[5m])
-max_over_time(dmn_evaluate_time_bucket[5m])
+histogram_quantile(0.5, rate(dmn_evaluate_decision_second_bucket[5m]))
+avg_over_time(dmn_evaluate_decision_second_bucket[5m])
+max_over_time(dmn_evaluate_decision_second_bucket[5m])

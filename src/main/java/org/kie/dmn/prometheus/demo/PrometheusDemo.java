@@ -1,11 +1,16 @@
 package org.kie.dmn.prometheus.demo;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.Counter;
-import io.prometheus.client.Histogram;
 import io.prometheus.client.exporter.HTTPServer;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -30,21 +35,12 @@ import org.kie.dmn.core.util.KieHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.text.MessageFormat;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-
 public class PrometheusDemo {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusDemo.class);
 
     public static void main(String[] args) throws IOException, InterruptedException {
         ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
-        Random pauseRandom = new Random();
 
         KieServices kieServices = KieServices.Factory.get();
         KieContainer kieContainer = KieHelper.getKieContainer(
@@ -93,63 +89,6 @@ public class PrometheusDemo {
         }
     }
 
-    // --- //
-
-    public static class PrometheusListener implements DMNRuntimeEventListener {
-
-        private final Counter evaluateCount = Counter.build().name("dmn_evaluation_prometheus_total").help("DMN Evaluations").labelNames("type").register();
-
-        private final Histogram histogram = Histogram.build().name("dmn_evaluate_time").help("DMN Evaluation Time").register();
-        private Histogram.Timer timer;
-
-        @Override public void beforeEvaluateDecision(BeforeEvaluateDecisionEvent event) {
-            timer = histogram.startTimer();
-        }
-
-        @Override public void afterEvaluateDecision(AfterEvaluateDecisionEvent event) {
-            evaluateCount.labels("decision").inc();
-            try {
-                ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
-
-                int pause = salaryRandom.nextInt(1000, 3000);
-                Thread.sleep(pause);
-                double duration = timer.observeDuration();
-                timer.close();
-                LOGGER.info(MessageFormat.format("pause: {0}ms - duration = {1}ms", pause, duration));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        @Override public void beforeEvaluateBKM(BeforeEvaluateBKMEvent event) {
-        }
-
-        @Override public void afterEvaluateBKM(AfterEvaluateBKMEvent event) {
-            evaluateCount.labels("bkn").inc();
-        }
-
-        @Override public void beforeEvaluateContextEntry(BeforeEvaluateContextEntryEvent event) {
-        }
-
-        @Override public void afterEvaluateContextEntry(AfterEvaluateContextEntryEvent event) {
-            evaluateCount.labels("contextEntry").inc();
-        }
-
-        @Override public void beforeEvaluateDecisionTable(BeforeEvaluateDecisionTableEvent event) {
-        }
-
-        @Override public void afterEvaluateDecisionTable(AfterEvaluateDecisionTableEvent event) {
-            evaluateCount.labels("decisionTable").inc();
-        }
-
-        @Override public void beforeEvaluateDecisionService(BeforeEvaluateDecisionServiceEvent event) {
-        }
-
-        @Override public void afterEvaluateDecisionService(AfterEvaluateDecisionServiceEvent event) {
-            evaluateCount.labels("decisionService").inc();
-        }
-    }
 
     // --- //
 
