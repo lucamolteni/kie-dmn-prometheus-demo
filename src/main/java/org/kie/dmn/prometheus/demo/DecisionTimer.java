@@ -28,24 +28,19 @@ public class DecisionTimer {
 
     private final Duration evictionTime;
 
-    private static final DateTimeFormatter formatter =
-            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT )
-                    .withLocale(Locale.ITALY )
-                    .withZone(ZoneId.systemDefault() );
-
     private Map<DecisionTimerKey, DecisionTimerValue> map = new ConcurrentHashMap<>();
 
     public DecisionTimer(Duration evictionTime) {
         this.evictionTime = evictionTime;
     }
 
-    public void scheduleTimer(Decision decision, long id) {
+    public void scheduleTimer(Decision decision, long id, Instant creationTs) {
 
         DecisionTimer.DecisionTimerKey key = new DecisionTimerKey(decision, id);
 
         map.computeIfAbsent(key, k -> {
             String decisionName = getDecisionName(decision);
-            return new DecisionTimerValue(histogram.labels(decisionName).startTimer(), Instant.now());
+            return new DecisionTimerValue(histogram.labels(decisionName).startTimer(), creationTs);
         });
     }
 
@@ -70,21 +65,21 @@ public class DecisionTimer {
         }
     }
 
-    public void purgeTimers() {
+    public boolean purgeTimers() {
         LOGGER.info("Purging timers");
         LOGGER.info("Map size: " + map.entrySet().size());
-        map.entrySet().removeIf(kv -> {
+        boolean removed = map.entrySet().removeIf(kv -> {
             Instant timerCreationTS = kv.getValue().instant;
             Instant evictionTime = Instant.now().minus(this.evictionTime);
-            boolean removed = timerCreationTS.isBefore(evictionTime);
 
-            LOGGER.info(MessageFormat.format("timer creation date {0} eviction time {1} removed {2}",
-                        formatter.format(timerCreationTS),
-                        formatter.format(evictionTime),
-                        removed));
-
-            return removed;
+            return timerCreationTS.isBefore(evictionTime);
         });
+        LOGGER.info("New map size:" + map.entrySet().size());
+        return removed;
+    }
+
+    public int getTimerNumbers() {
+        return map.size();
     }
 
     final class DecisionTimerKey {

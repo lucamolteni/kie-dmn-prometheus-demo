@@ -1,5 +1,7 @@
 package org.kie.dmn.prometheus.demo;
 
+import java.time.Instant;
+
 import io.prometheus.client.Counter;
 import org.kie.dmn.api.core.event.AfterEvaluateBKMEvent;
 import org.kie.dmn.api.core.event.AfterEvaluateContextEntryEvent;
@@ -31,7 +33,7 @@ public class PrometheusListener implements DMNRuntimeEventListener {
 
     @Override
     public void beforeEvaluateDecision(BeforeEvaluateDecisionEvent event) {
-        decisionTimer.scheduleTimer(event.getDecision().getDecision(), Thread.currentThread().getId());
+        decisionTimer.scheduleTimer(event.getDecision().getDecision(), Thread.currentThread().getId(), Instant.now());
     }
 
     @Override
