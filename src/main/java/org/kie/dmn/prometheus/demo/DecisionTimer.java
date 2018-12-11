@@ -1,6 +1,5 @@
 package org.kie.dmn.prometheus.demo;
 
-import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
