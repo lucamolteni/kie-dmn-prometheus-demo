@@ -1,6 +1,8 @@
 package org.kie.dmn.prometheus.demo;
 
+import java.text.MessageFormat;
 import java.time.Instant;
+import java.util.concurrent.ThreadLocalRandom;
 
 import io.prometheus.client.Counter;
 import org.kie.dmn.api.core.event.AfterEvaluateBKMEvent;
@@ -38,7 +40,17 @@ public class PrometheusListener implements DMNRuntimeEventListener {
 
     @Override
     public void afterEvaluateDecision(AfterEvaluateDecisionEvent event) {
-        decisionTimer.registerTimer(event.getDecision().getDecision(), Thread.currentThread().getId());
+        decisionTimer.signalTimer(event.getDecision().getDecision(), Thread.currentThread().getId(), duration -> {
+
+            ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
+            int pause = salaryRandom.nextInt(1000, 3000);
+            try {
+                Thread.sleep(pause);
+                LOGGER.info(MessageFormat.format("pause: {0}ms - duration = {1}ms", pause, duration));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override

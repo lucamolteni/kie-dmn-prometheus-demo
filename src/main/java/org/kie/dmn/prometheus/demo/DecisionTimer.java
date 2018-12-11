@@ -1,16 +1,11 @@
 package org.kie.dmn.prometheus.demo;
 
-import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 import io.prometheus.client.Histogram;
 import org.kie.dmn.model.api.Decision;
@@ -44,24 +39,16 @@ public class DecisionTimer {
         });
     }
 
-    public void registerTimer(Decision decision, long threadId) {
+    public void signalTimer(Decision decision, long threadId, Consumer<Double> consumer) {
         DecisionTimerKey key = new DecisionTimerKey(decision, threadId);
 
         DecisionTimerValue value = map.get(key);
         if (value != null) {
-            ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
-
-            int pause = salaryRandom.nextInt(1000, 3000);
-            try {
-                Thread.sleep(pause);
-                Histogram.Timer timer = value.timer;
-                double duration = timer.observeDuration();
-                timer.close();
-                map.remove(key);
-                LOGGER.info(MessageFormat.format("pause: {0}ms - duration = {1}ms", pause, duration));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Histogram.Timer timer = value.timer;
+            double duration = timer.observeDuration();
+            timer.close();
+            consumer.accept(duration);
+            map.remove(key);
         }
     }
 
