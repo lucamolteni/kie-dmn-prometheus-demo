@@ -19,6 +19,7 @@ public class DecisionTimer {
     private final Histogram histogram = Histogram.build().name("dmn_evaluate_decision_second")
             .help("DMN Evaluation Time")
             .labelNames("decision_name")
+            .buckets(1, 2, 3, 4)
             .register();
 
     private final Duration evictionTime;
