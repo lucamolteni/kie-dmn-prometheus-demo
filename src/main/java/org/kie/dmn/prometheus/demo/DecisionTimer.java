@@ -23,7 +23,7 @@ public class DecisionTimer {
 
     private Map<DecisionTimerKey, DecisionTimerValue> map = new ConcurrentHashMap<>();
 
-    public DecisionTimerKey scheduleTimer(Decision decision, long id) {
+    public void scheduleTimer(Decision decision, long id) {
 
         DecisionTimer.DecisionTimerKey key = new DecisionTimerKey(decision, id);
 
@@ -31,8 +31,6 @@ public class DecisionTimer {
             String decisionName = getDecisionName(decision);
             return new DecisionTimerValue(histogram.labels(decisionName).startTimer(), Instant.now());
         });
-
-        return new DecisionTimerKey(decision, id);
     }
 
     public void registerTimer(Decision decision, long threadId) {
