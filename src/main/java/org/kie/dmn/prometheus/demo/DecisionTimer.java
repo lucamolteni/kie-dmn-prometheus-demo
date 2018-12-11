@@ -1,5 +1,6 @@
 package org.kie.dmn.prometheus.demo;
 
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -81,8 +82,29 @@ public class DecisionTimer {
         }
 
         @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            DecisionTimerKey that = (DecisionTimerKey) o;
+            return threadId == that.threadId &&
+                    decision.equals(that.decision);
+        }
+
+        @Override
         public int hashCode() {
             return Objects.hash(decision, threadId);
+        }
+
+        @Override
+        public String toString() {
+            return "DecisionTimerKey{" +
+                    "decision=" + decision +
+                    ", threadId=" + threadId +
+                    '}';
         }
     }
 
@@ -94,6 +116,14 @@ public class DecisionTimer {
         public DecisionTimerValue(Histogram.Timer timer, Instant instant) {
             this.timer = timer;
             this.instant = instant;
+        }
+
+        @Override
+        public String toString() {
+            return "DecisionTimerValue{" +
+                    "timer=" + timer.hashCode() +
+                    ", instant=" + instant +
+                    '}';
         }
     }
 
