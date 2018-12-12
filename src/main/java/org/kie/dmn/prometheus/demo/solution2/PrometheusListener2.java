@@ -51,7 +51,7 @@ public class PrometheusListener2 implements DMNRuntimeEventListener {
         BeforeEvaluateDecisionEventImpl event = getBeforeImpl(getAfterImpl(e).getBeforeEvent());
         Histogram.Timer timer = (Histogram.Timer) event.getMetadata();
         ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
-        int pause = salaryRandom.nextInt(1000, 4000);
+        int pause = salaryRandom.nextInt(400, 4100);
         try {
             TimeUnit.MILLISECONDS.sleep(pause);
             timer.close();

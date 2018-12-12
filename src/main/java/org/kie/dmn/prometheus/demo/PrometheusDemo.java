@@ -1,9 +1,13 @@
 package org.kie.dmn.prometheus.demo;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +27,7 @@ import org.kie.dmn.prometheus.demo.solution1.PrometheusListener;
 import org.kie.dmn.prometheus.demo.solution2.PrometheusListener2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.nio.ch.ThreadPool;
 
 public class PrometheusDemo {
 
@@ -50,11 +55,29 @@ public class PrometheusDemo {
         new HTTPServer(Integer.valueOf(System.getProperty("dmn.prometheus.port", "19090")));
         LOGGER.info("Prometheus endpoint on port {}", System.getProperty("dmn.prometheus.port", "19090"));
 
-        ExecutorService executor = Executors.newFixedThreadPool(4);
-        while (true) {
-            executor.submit(() -> evaluateDMNWithPause(dmnRuntime, dmnModel));
-            Thread.sleep(100);
+
+
+        final int parallelism = 4;
+        final ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+        final CyclicBarrier started = new CyclicBarrier(parallelism);
+        final Callable<Long> task = () -> {
+            started.await();
+            final Thread current = Thread.currentThread();
+            long executions = 0;
+            while (!current.isInterrupted()) {
+                evaluateDMNWithPause(dmnRuntime, dmnModel);
+                executions++;
+            }
+            return executions;
+        };
+        final ArrayList<Future<Long>> tasks = new ArrayList<>(parallelism);
+        for (int i = 0; i < parallelism; i++) {
+            tasks.add(executor.submit(task));
         }
+        executor.shutdown();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            tasks.forEach(future -> future.cancel(true));
+        }));
     }
 
     private static void evaluateDMNWithPause(DMNRuntime dmnRuntime, DMNModel dmnModel) {
