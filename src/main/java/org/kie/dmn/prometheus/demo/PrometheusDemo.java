@@ -36,6 +36,7 @@ import org.kie.dmn.core.impl.DMNRuntimeImpl;
 import org.kie.dmn.core.util.KieHelper;
 import org.kie.dmn.prometheus.demo.solution1.DecisionTimer;
 import org.kie.dmn.prometheus.demo.solution1.PrometheusListener;
+import org.kie.dmn.prometheus.demo.solution2.PrometheusListener2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,8 @@ public class PrometheusDemo {
         DMNRuntime dmnRuntime = kieContainer.newKieSession().getKieRuntime(DMNRuntime.class);
         ((DMNRuntimeImpl) dmnRuntime).setOption(new RuntimeTypeCheckOption(true));
 
-        PrometheusListener listener = solution1();
+//        DMNRuntimeEventListener listener = solution1();
+        DMNRuntimeEventListener listener = solution2();
 
 
 
@@ -99,13 +101,17 @@ public class PrometheusDemo {
         }
     }
 
-    private static PrometheusListener solution1() {
+    private static DMNRuntimeEventListener solution1() {
         Duration evictionTime = Duration.ofSeconds(13);
         DecisionTimer decisionTimer = new DecisionTimer(evictionTime);
         PrometheusListener listener = new PrometheusListener(decisionTimer);
         // Schedule eviction
         Executors.newScheduledThreadPool(1).schedule(decisionTimer::purgeTimers, evictionTime.toMillis(), TimeUnit.MILLISECONDS);
         return listener;
+    }
+
+    private static DMNRuntimeEventListener solution2() {
+        return new PrometheusListener2();
     }
 
     // --- //
