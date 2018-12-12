@@ -53,6 +53,7 @@ public class PrometheusDemo {
         ExecutorService executor = Executors.newFixedThreadPool(4);
         while (true) {
             executor.submit(() -> evaluateDMNWithPause(dmnRuntime, dmnModel));
+            Thread.sleep(100);
         }
     }
 
