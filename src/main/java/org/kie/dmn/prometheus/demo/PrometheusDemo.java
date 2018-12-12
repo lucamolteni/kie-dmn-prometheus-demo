@@ -7,7 +7,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -15,16 +14,6 @@ import org.kie.dmn.api.core.DMNContext;
 import org.kie.dmn.api.core.DMNModel;
 import org.kie.dmn.api.core.DMNResult;
 import org.kie.dmn.api.core.DMNRuntime;
-import org.kie.dmn.api.core.event.AfterEvaluateBKMEvent;
-import org.kie.dmn.api.core.event.AfterEvaluateContextEntryEvent;
-import org.kie.dmn.api.core.event.AfterEvaluateDecisionEvent;
-import org.kie.dmn.api.core.event.AfterEvaluateDecisionServiceEvent;
-import org.kie.dmn.api.core.event.AfterEvaluateDecisionTableEvent;
-import org.kie.dmn.api.core.event.BeforeEvaluateBKMEvent;
-import org.kie.dmn.api.core.event.BeforeEvaluateContextEntryEvent;
-import org.kie.dmn.api.core.event.BeforeEvaluateDecisionEvent;
-import org.kie.dmn.api.core.event.BeforeEvaluateDecisionServiceEvent;
-import org.kie.dmn.api.core.event.BeforeEvaluateDecisionTableEvent;
 import org.kie.dmn.api.core.event.DMNRuntimeEventListener;
 import org.kie.dmn.core.compiler.RuntimeTypeCheckOption;
 import org.kie.dmn.core.impl.DMNRuntimeImpl;
@@ -53,10 +42,7 @@ public class PrometheusDemo {
 //        DMNRuntimeEventListener listener = solution1();
         DMNRuntimeEventListener listener = solution2();
 
-
-
         dmnRuntime.addListener(listener);
-
 
         DMNModel dmnModel = dmnRuntime.getModel("https://github.com/kiegroup/kie-dmn/itemdef", "simple-item-def");
 
@@ -64,31 +50,13 @@ public class PrometheusDemo {
         new HTTPServer(Integer.valueOf(System.getProperty("dmn.prometheus.port", "19090")));
         LOGGER.info("Prometheus endpoint on port {}", System.getProperty("dmn.prometheus.port", "19090"));
 
-        // Prometheus endpoint under micrometer
-//        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-//        dmnRuntime.addListener(new MicrometerListener(prometheusRegistry));
-//
-//        InetSocketAddress micrometerAddress = new InetSocketAddress(Integer.valueOf(System.getProperty("dmn.micrometer.port", "29090")));
-//        HttpServer micrometerServer = HttpServer.create(micrometerAddress, 0);
-//        micrometerServer.createContext("/metrics", httpExchange -> {
-//            String response = prometheusRegistry.scrape();
-//            httpExchange.sendResponseHeaders(200, response.getBytes().length);
-//            try (OutputStream os = httpExchange.getResponseBody()) {
-//                os.write(response.getBytes());
-//            }
-//        });
-//        new Thread(micrometerServer::start).start();
-//        LOGGER.info("Micrometer endpoint on port {}", System.getProperty("dmn.micrometer.port", "29090"));
-
-
         ExecutorService executor = Executors.newFixedThreadPool(4);
-        while(true) {
+        while (true) {
             executor.submit(() -> evaluateDMNWithPause(dmnRuntime, dmnModel));
         }
     }
 
     private static void evaluateDMNWithPause(DMNRuntime dmnRuntime, DMNModel dmnModel) {
-
         ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
 
         int mSalary = salaryRandom.nextInt(1000, 100000 / 12);
@@ -99,7 +67,6 @@ public class PrometheusDemo {
         DMNResult dmnResult = dmnRuntime.evaluateAll(dmnModel, context);
 
         LOGGER.info("Evaluated rule: monthly {} -> yearly {} ", mSalary, dmnResult.getContext().get("Yearly Salary"));
-
     }
 
     private static DMNRuntimeEventListener solution1() {
@@ -114,55 +81,4 @@ public class PrometheusDemo {
     private static DMNRuntimeEventListener solution2() {
         return new PrometheusListener2();
     }
-
-    // --- //
-
-    public static class MicrometerListener implements DMNRuntimeEventListener {
-
-        private final io.micrometer.core.instrument.Counter evaluateDecisionCount, evaluateBkmCount, evaluateContextEntryCount, evaluateDecisionTableCount, evaluateDecisionServiceCount;
-
-        private MicrometerListener(MeterRegistry meterRegistry) {
-            evaluateDecisionCount = meterRegistry.counter("dmn_evaluation_micrometer", "type", "decision");
-            evaluateBkmCount = meterRegistry.counter("dmn_evaluation_micrometer", "type", "bkm");
-            evaluateContextEntryCount = meterRegistry.counter("dmn_evaluation_micrometer", "type", "contextEntry");
-            evaluateDecisionTableCount = meterRegistry.counter("dmn_evaluation_micrometer", "type", "decisionTable");
-            evaluateDecisionServiceCount = meterRegistry.counter("dmn_evaluation_micrometer", "type", "decisionService");
-        }
-
-        @Override public void beforeEvaluateDecision(BeforeEvaluateDecisionEvent event) {
-        }
-
-        @Override public void afterEvaluateDecision(AfterEvaluateDecisionEvent event) {
-            evaluateDecisionCount.increment();
-        }
-
-        @Override public void beforeEvaluateBKM(BeforeEvaluateBKMEvent event) {
-        }
-
-        @Override public void afterEvaluateBKM(AfterEvaluateBKMEvent event) {
-            evaluateBkmCount.increment();
-        }
-
-        @Override public void beforeEvaluateContextEntry(BeforeEvaluateContextEntryEvent event) {
-        }
-
-        @Override public void afterEvaluateContextEntry(AfterEvaluateContextEntryEvent event) {
-            evaluateContextEntryCount.increment();
-        }
-
-        @Override public void beforeEvaluateDecisionTable(BeforeEvaluateDecisionTableEvent event) {
-        }
-
-        @Override public void afterEvaluateDecisionTable(AfterEvaluateDecisionTableEvent event) {
-            evaluateDecisionTableCount.increment();
-        }
-
-        @Override public void beforeEvaluateDecisionService(BeforeEvaluateDecisionServiceEvent event) {
-        }
-
-        @Override public void afterEvaluateDecisionService(AfterEvaluateDecisionServiceEvent event) {
-            evaluateDecisionServiceCount.increment();
-        }
-    }
-
 }
