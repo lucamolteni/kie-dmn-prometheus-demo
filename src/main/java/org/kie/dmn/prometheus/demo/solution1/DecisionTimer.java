@@ -47,7 +47,6 @@ public class DecisionTimer {
         if (value != null) {
             Histogram.Timer timer = value.timer;
             double duration = timer.observeDuration();
-            timer.close();
             consumer.accept(duration);
             map.remove(key);
         }
