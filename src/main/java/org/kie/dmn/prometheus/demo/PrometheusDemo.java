@@ -35,6 +35,8 @@ import org.kie.dmn.api.core.event.DMNRuntimeEventListener;
 import org.kie.dmn.core.compiler.RuntimeTypeCheckOption;
 import org.kie.dmn.core.impl.DMNRuntimeImpl;
 import org.kie.dmn.core.util.KieHelper;
+import org.kie.dmn.prometheus.demo.solution1.DecisionTimer;
+import org.kie.dmn.prometheus.demo.solution1.PrometheusListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

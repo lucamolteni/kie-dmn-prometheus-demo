@@ -1,4 +1,4 @@
-package org.kie.dmn.prometheus.demo;
+package org.kie.dmn.prometheus.demo.solution1;
 
 import java.time.Duration;
 import java.time.Instant;
