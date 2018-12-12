@@ -1,18 +1,13 @@
 package org.kie.dmn.prometheus.demo;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -44,8 +39,7 @@ public class PrometheusDemo {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusDemo.class);
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
+    public static void main(String[] args) throws Exception {
 
         KieServices kieServices = KieServices.Factory.get();
         KieContainer kieContainer = KieHelper.getKieContainer(
@@ -86,19 +80,26 @@ public class PrometheusDemo {
 //        new Thread(micrometerServer::start).start();
 //        LOGGER.info("Micrometer endpoint on port {}", System.getProperty("dmn.micrometer.port", "29090"));
 
-        while (true) {
-            int mSalary = salaryRandom.nextInt(1000, 100000 / 12);
-            int pause = salaryRandom.nextInt(100, 150);
 
-            DMNContext context = dmnRuntime.newContext();
-            context.set("Monthly Salary", mSalary);
-
-            DMNResult dmnResult = dmnRuntime.evaluateAll(dmnModel, context);
-
-            LOGGER.info("Evaluated rule: monthly {} -> yearly {} ... next pause: {}ms", mSalary, dmnResult.getContext().get("Yearly Salary"), pause);
-
-            Thread.sleep(pause);
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+        while(true) {
+            executor.submit(() -> evaluateDMNWithPause(dmnRuntime, dmnModel));
         }
+    }
+
+    private static void evaluateDMNWithPause(DMNRuntime dmnRuntime, DMNModel dmnModel) {
+
+        ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
+
+        int mSalary = salaryRandom.nextInt(1000, 100000 / 12);
+
+        DMNContext context = dmnRuntime.newContext();
+        context.set("Monthly Salary", mSalary);
+
+        DMNResult dmnResult = dmnRuntime.evaluateAll(dmnModel, context);
+
+        LOGGER.info("Evaluated rule: monthly {} -> yearly {} ", mSalary, dmnResult.getContext().get("Yearly Salary"));
+
     }
 
     private static DMNRuntimeEventListener solution1() {

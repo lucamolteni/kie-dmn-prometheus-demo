@@ -30,7 +30,7 @@ public class PrometheusListener2 implements DMNRuntimeEventListener {
     private final Histogram histogram = Histogram.build().name("dmn_evaluate_decision_second")
             .help("DMN Evaluation Time")
             .labelNames("decision_name")
-            .buckets(1, 2, 3, 4)
+            .buckets(0.5, 1, 2, 3, 4)
             .register();
 
     private final Counter evaluateCount = Counter.build().name("dmn_evaluation_prometheus_total")
