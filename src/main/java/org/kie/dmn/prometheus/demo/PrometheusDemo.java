@@ -71,20 +71,20 @@ public class PrometheusDemo {
         LOGGER.info("Prometheus endpoint on port {}", System.getProperty("dmn.prometheus.port", "19090"));
 
         // Prometheus endpoint under micrometer
-        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-        dmnRuntime.addListener(new MicrometerListener(prometheusRegistry));
-
-        InetSocketAddress micrometerAddress = new InetSocketAddress(Integer.valueOf(System.getProperty("dmn.micrometer.port", "29090")));
-        HttpServer micrometerServer = HttpServer.create(micrometerAddress, 0);
-        micrometerServer.createContext("/metrics", httpExchange -> {
-            String response = prometheusRegistry.scrape();
-            httpExchange.sendResponseHeaders(200, response.getBytes().length);
-            try (OutputStream os = httpExchange.getResponseBody()) {
-                os.write(response.getBytes());
-            }
-        });
-        new Thread(micrometerServer::start).start();
-        LOGGER.info("Micrometer endpoint on port {}", System.getProperty("dmn.micrometer.port", "29090"));
+//        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+//        dmnRuntime.addListener(new MicrometerListener(prometheusRegistry));
+//
+//        InetSocketAddress micrometerAddress = new InetSocketAddress(Integer.valueOf(System.getProperty("dmn.micrometer.port", "29090")));
+//        HttpServer micrometerServer = HttpServer.create(micrometerAddress, 0);
+//        micrometerServer.createContext("/metrics", httpExchange -> {
+//            String response = prometheusRegistry.scrape();
+//            httpExchange.sendResponseHeaders(200, response.getBytes().length);
+//            try (OutputStream os = httpExchange.getResponseBody()) {
+//                os.write(response.getBytes());
+//            }
+//        });
+//        new Thread(micrometerServer::start).start();
+//        LOGGER.info("Micrometer endpoint on port {}", System.getProperty("dmn.micrometer.port", "29090"));
 
         while (true) {
             int mSalary = salaryRandom.nextInt(1000, 100000 / 12);
