@@ -2,6 +2,7 @@ package org.kie.dmn.prometheus.demo.solution1;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +29,7 @@ public class DecisionTimerTest {
         assertFalse(notRemoved);
         assertEquals(1, decisionTimer.getTimerNumbers());
         decisionTimer.scheduleTimer(stubDecision, 2, Instant.now());
-        Thread.sleep(20);
+        TimeUnit.MILLISECONDS.sleep(20);
         boolean removed = decisionTimer.purgeTimers();
         assertTrue(removed);
         assertEquals(0, decisionTimer.getTimerNumbers());

@@ -2,6 +2,7 @@ package org.kie.dmn.prometheus.demo.solution2;
 
 import java.text.MessageFormat;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
@@ -52,7 +53,7 @@ public class PrometheusListener2 implements DMNRuntimeEventListener {
         ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
         int pause = salaryRandom.nextInt(1000, 4000);
         try {
-            Thread.sleep(pause);
+            TimeUnit.MILLISECONDS.sleep(pause);
             timer.close();
             LOGGER.info(MessageFormat.format("pause: {0}ms", pause));
         } catch (InterruptedException ex) {
