@@ -88,7 +88,7 @@ public class PrometheusDemo {
 
         while (true) {
             int mSalary = salaryRandom.nextInt(1000, 100000 / 12);
-            int pause = salaryRandom.nextInt(2000, 3000);
+            int pause = salaryRandom.nextInt(100, 150);
 
             DMNContext context = dmnRuntime.newContext();
             context.set("Monthly Salary", mSalary);
