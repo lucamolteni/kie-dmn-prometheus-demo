@@ -27,7 +27,6 @@ import org.kie.dmn.prometheus.demo.solution1.PrometheusListener;
 import org.kie.dmn.prometheus.demo.solution2.PrometheusListener2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.nio.ch.ThreadPool;
 
 public class PrometheusDemo {
 

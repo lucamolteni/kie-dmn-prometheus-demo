@@ -38,23 +38,29 @@ public class PrometheusListener2 implements DMNRuntimeEventListener {
             .help("DMN Evaluations")
             .labelNames("decision_name").register();
 
+
     @Override
     public void beforeEvaluateDecision(BeforeEvaluateDecisionEvent e) {
-        String decisionName = getDecisionName(e.getDecision().getDecision());
-        Histogram.Timer timer = histogram.labels(decisionName).startTimer();
+        long nanoTime = System.nanoTime();
         BeforeEvaluateDecisionEventImpl event = getBeforeImpl(e);
-        event.setMetadata(timer);
+        event.setTimestamp(nanoTime);
     }
 
     @Override
     public void afterEvaluateDecision(AfterEvaluateDecisionEvent e) {
         BeforeEvaluateDecisionEventImpl event = getBeforeImpl(getAfterImpl(e).getBeforeEvent());
-        Histogram.Timer timer = (Histogram.Timer) event.getMetadata();
+        String decisionName = getDecisionName(e.getDecision().getDecision());
+        long startTime = event.getTimestamp();
         ThreadLocalRandom salaryRandom = ThreadLocalRandom.current();
         int pause = salaryRandom.nextInt(400, 4100);
         try {
             TimeUnit.MILLISECONDS.sleep(pause);
-            timer.close();
+
+            long elapsed = System.nanoTime() - startTime;
+
+            histogram.labels(decisionName)
+                    .observe(elapsed);
+
             LOGGER.info(MessageFormat.format("pause: {0}ms", pause));
         } catch (InterruptedException ex) {
             ex.printStackTrace();
