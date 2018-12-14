@@ -28,16 +28,25 @@ public class PrometheusListener2 implements DMNRuntimeEventListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusListener.class);
 
-    private final Histogram histogram = Histogram.build().name("dmn_evaluate_decision_second")
+    /**
+     * Number of nanoseconds in a second.
+     */
+    public static final long NANOSECONDS_PER_SECOND = 1_000_000_000;
+    public static final long HALF_SECOND_NANO = 500_000_000;
+
+    public static long toNano(long second) {
+        return second * NANOSECONDS_PER_SECOND;
+    }
+
+    private final Histogram histogram = Histogram.build().name("dmn_evaluate_decision_nanosecond")
             .help("DMN Evaluation Time")
             .labelNames("decision_name")
-            .buckets(0.5, 1, 2, 3, 4)
+            .buckets(HALF_SECOND_NANO, toNano(1), toNano(2), toNano(3), toNano(4))
             .register();
 
     private final Counter evaluateCount = Counter.build().name("dmn_evaluation_prometheus_total")
             .help("DMN Evaluations")
             .labelNames("decision_name").register();
-
 
     @Override
     public void beforeEvaluateDecision(BeforeEvaluateDecisionEvent e) {
@@ -57,11 +66,10 @@ public class PrometheusListener2 implements DMNRuntimeEventListener {
             TimeUnit.MILLISECONDS.sleep(pause);
 
             long elapsed = System.nanoTime() - startTime;
-
             histogram.labels(decisionName)
                     .observe(elapsed);
 
-            LOGGER.info(MessageFormat.format("pause: {0}ms", pause));
+            LOGGER.info(MessageFormat.format("pause: {0}s elapsed {1}", pause, elapsed));
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
